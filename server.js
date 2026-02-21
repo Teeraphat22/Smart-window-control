@@ -1,8 +1,3 @@
-// ===============================
-// Smart Window Control System
-// WebSocket + PostgreSQL + Firebase + Auth
-// ===============================
-
 require("dotenv").config();
 
 const express = require("express");
@@ -16,9 +11,7 @@ const { Pool } = require("pg");
 const admin = require("firebase-admin");
 const fs = require("fs");
 
-// ===============================
-// Environment Validation
-// ===============================
+
 
 const {
   PORT = 8080,
@@ -38,9 +31,7 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-// ===============================
-// Database Setup
-// ===============================
+
 
 const pool = new Pool({
   host: DB_HOST,
@@ -54,9 +45,7 @@ pool.query("SELECT NOW()")
   .then(() => console.log("✅ Database connected successfully"))
   .catch(err => console.error("❌ Database connection failed:", err.message));
 
-// ===============================
-// Firebase Setup
-// ===============================
+
 
 let db = null;
 const serviceAccountPath = "./serviceAccountKey.json";
@@ -77,9 +66,7 @@ if (fs.existsSync(serviceAccountPath) && FIREBASE_DB_URL) {
   console.warn("⚠️ Firebase disabled (missing key or DB URL)");
 }
 
-// ===============================
-// Telegram Setup
-// ===============================
+
 
 async function sendTelegram(message) {
   if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) {
@@ -101,9 +88,7 @@ async function sendTelegram(message) {
   }
 }
 
-// ===============================
-// Express Setup
-// ===============================
+
 
 const app = express();
 app.use(cors());
@@ -113,9 +98,7 @@ app.use(express.static("public"));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// ===============================
-// Auth Middleware
-// ===============================
+
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -130,9 +113,7 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// ===============================
-// Routes
-// ===============================
+
 
 app.get("/api/health", async (req, res) => {
   try {
@@ -143,9 +124,7 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// ===============================
-// System State
-// ===============================
+
 
 let systemState = {
   temperature: 0,
@@ -157,9 +136,6 @@ let systemState = {
 
 let previousWindowState = "CLOSE";
 
-// ===============================
-// WebSocket Logic
-// ===============================
 
 wss.on("connection", (ws) => {
   ws.role = "UNKNOWN";
@@ -215,10 +191,6 @@ Light: ${systemState.light} lux`
   });
 });
 
-// ===============================
-// Helpers
-// ===============================
-
 function broadcastToBrowser(data) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN && client.role === "BROWSER") {
@@ -235,9 +207,6 @@ function sendToESP32(command) {
   });
 }
 
-// ===============================
-// Start Server
-// ===============================
 
 server.listen(PORT, () => {
   console.log("=================================");
