@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Smart Window Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: #0c4a6e;
+  padding: 40px 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 30px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-name {
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #ef4444 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: all 0.3s !important;
+  margin: 0 !important;
+}
+
+.logout-btn:hover {
+  background: #dc2626 !important;
+  transform: translateY(-2px) !important;
+}
+
+h1 {
+  font-size: 32px;
+  margin-bottom: 40px;
+  font-weight: 600;
+  color: #1e40af;
+  text-align: center;
+  width: 100%;
+}
+
+/* ===== Grid Layout ===== */
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.dashboard .full {
+  grid-column: 1 / -1;
+  width: 50%;
+  margin: 0 auto;
+}
+
+/* ===== Card ===== */
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid #0ea5e9;
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.1);
+}
+
+.card > div:first-child {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0369a1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 15px;
+}
+
+/* Full width bottom card */
+.full {
+  grid-column: span 2;
+}
+
+/* ===== Window Status ===== */
+.status {
+  font-size: 20px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
+.open { color: #0891b2; }
+.close { color: #e11d48; }
+
+.full {
+  text-align: center;
+}
+
+.full button {
+  padding: 12px 32px;
+  font-size: 16px;
+  margin: 0 8px;
+}
+
+.full .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.full .button-group button {
+  margin: 0;
+}
+
+.full .button-auto {
+  display: block;
+  margin: 15px auto 0;
+}
+
+/* ===== Buttons ===== */
+button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  color: white;
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(3, 105, 161, 0.5);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+canvas {
+  max-width: 100%;
+}
+
+svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 20px auto;
+}
+
+#tempGauge {
+  height: 280px !important;
+}
+
+#lightChart {
+  height: 280px !important;
+  width: 100% !important;
+}
+
+#tempValue {
+  text-align: center;
+  font-size: 36px;
+  font-weight: bold;
+  margin-top: 20px;
+  color: #0369a1;
+}
+
+#lightValue {
+  text-align: center;
+  font-size: 36px;
+  font-weight: bold;
+  margin-top: 20px;
+  color: #0369a1;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>Smart Window Control</h1>
+  <div class="user-info">
+    <span class="user-name" id="userName">User</span>
+    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="dashboard">
+
+  <!-- Temperature Gauge -->
+  <div class="card">
+    <div>Temperature (°C)</div>
+    <svg id="tempGauge" width="100%" viewBox="0 0 200 140" style="max-width: 100%; height: auto;">
+      <!-- Background arc -->
+      <defs>
+        <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Arc background -->
+      <path d="M 20 100 A 80 80 0 0 1 180 100" stroke="url(#gaugeGradient)" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <!-- Min label -->
+      <text x="28" y="125" font-size="12" fill="#666">0°C</text>
+      <!-- Max label -->
+      <text x="165" y="125" font-size="12" fill="#666">50°C</text>
+      <!-- Needle -->
+      <g id="needle" transform="translate(100, 100)">
+        <line x1="0" y1="0" x2="0" y2="-70" stroke="#0369a1" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="0" cy="0" r="6" fill="#0369a1"/>
+      </g>
+    </svg>
+    <div id="tempValue">--°C</div>
+  </div>
+
+  <!-- Light Graph -->
+  <div class="card">
+    <div>Light (lux)</div>
+    <canvas id="lightChart"></canvas>
+    <div id="lightValue">--lux</div>
+  </div>
+
+  <!-- Window Control -->
+  <div class="card full">
+    <div class="status" id="windowStatus">Status: --</div>
+    <div class="status" id="modeStatus">Mode: --</div>
+    <div class="button-group">
+      <button onclick="sendCommand('OPEN')">Open</button>
+      <button onclick="sendCommand('CLOSE')">Close</button>
+    </div>
+    <button class="button-auto" onclick="sendCommand('AUTO')">Auto Mode</button>
+  </div>
+
+</div>
+
+<script>
+
+/* ================= Authentication ================= */
+
+// Check if user is logged in
+const token = localStorage.getItem("token");
+const userId = localStorage.getItem("userId");
+const username = localStorage.getItem("username");
+
+if (!token || !userId) {
+  window.location.href = "/auth.html";
+} else {
+  document.getElementById("userName").textContent = username || "User";
+}
+
+function handleLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("username");
+  window.location.href = "/auth.html";
+}
+
+/* ================= WebSocket ================= */
+
+// Create WebSocket and add verbose client-side logging for debugging
+const ws = new WebSocket(`ws://${location.host}`);
+
+// Expose socket for interactive testing in Console
+window.ws = ws;
+
+console.log("Client init", { location: location.href, token, userId, username });
+
+ws.onopen = () => {
+  console.log("WS: open", { host: location.host });
+  try {
+    ws.send("ROLE:BROWSER");
+    ws.send(`USER:${userId}`);
+    console.log("WS: sent ROLE and USER");
+  } catch (sendErr) {
+    console.error("WS send error on open:", sendErr);
+  }
+};
+
+ws.onmessage = (event) => {
+  console.log("WS: message received", event.data);
+  try {
+    const data = JSON.parse(event.data);
+    updateDashboard(data);
+  } catch (e) {
+    console.log("WS: non-JSON message (ignored)", event.data);
+  }
+};
+
+ws.onclose = (ev) => {
+  console.warn("WS: closed", ev);
+};
+
+ws.onerror = (err) => {
+  console.error("WS: error", err);
+};
+
+/* ================= Gauge ================= */
+
+// Update needle rotation based on temperature
+function updateNeedle(temp) {
+  if (temp > 50) temp = 50;
+  if (temp < 0) temp = 0;
+  // Map temp (0-50) to angle (0-180 degrees)
+  const angle = (temp / 50) * 180;
+  const needle = document.getElementById('needle');
+  needle.setAttribute('transform', `translate(100, 100) rotate(${angle - 90})`);
+}
+
+/* ================= Light Graph ================= */
+
+const lightChart = new Chart(
+  document.getElementById("lightChart"),
+  {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: "#0369a1",
+        backgroundColor: "rgba(3, 105, 161, 0.1)",
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: "#0369a1",
+        pointBorderColor: "white",
+        pointBorderWidth: 2,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        x: { 
+          display: false 
+        },
+        y: { 
+          beginAtZero: true,
+          max: 5000,
+          ticks: {
+            stepSize: 500
+          },
+          grid: {
+            color: "rgba(3, 105, 161, 0.1)"
+          }
+        }
+      },
+      plugins: { 
+        legend: { display: false },
+        filler: {
+          propagate: true
+        }
+      }
+    }
+  }
+);
+
+/* ================= Update ================= */
+
+function updateDashboard(data) {
+
+  // Update Temperature Value
+  document.getElementById("tempValue").innerText = data.temperature + "°C";
+
+  // Update Needle
+  updateNeedle(data.temperature);
+
+  // Update Graph
+  const time = new Date().toLocaleTimeString();
+
+  if (lightChart.data.labels.length > 20) {
+    lightChart.data.labels.shift();
+    lightChart.data.datasets[0].data.shift();
+  }
+
+  lightChart.data.labels.push(time);
+  lightChart.data.datasets[0].data.push(data.light);
+  lightChart.update();
+
+  // Update Light Value
+  document.getElementById("lightValue").innerText = data.light + " lux";
+
+  // Update Status
+  const status = document.getElementById("windowStatus");
+  status.innerText = "Status: " + data.window;
+  status.className =
+    data.window === "OPEN"
+      ? "status open"
+      : "status close";
+    
+  const mode = document.getElementById("modeStatus");
+  mode.innerText = "Mode: " + data.mode;
+}
+
+/* ================= Command ================= */
+
+function sendCommand(cmd) {
+  ws.send(cmd);
+}
+
+</script>
+
+</body>
+</html>
