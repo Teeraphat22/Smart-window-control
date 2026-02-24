@@ -203,7 +203,14 @@ svg {
   font-size: 36px;
   font-weight: bold;
   margin-top: 20px;
-  color: #0369a1;
+}
+
+#lightValue.bright {
+  color: #d97706;
+}
+
+#lightValue.dark {
+  color: #1e3a5f;
 }
 
 </style>
@@ -250,9 +257,9 @@ svg {
 
   <!-- Light Graph -->
   <div class="card">
-    <div>Light (lux)</div>
+    <div>Light</div>
     <canvas id="lightChart"></canvas>
-    <div id="lightValue">--lux</div>
+    <div id="lightValue">--</div>
   </div>
 
   <!-- Window Control -->
@@ -292,41 +299,20 @@ function handleLogout() {
 
 /* ================= WebSocket ================= */
 
-// Create WebSocket and add verbose client-side logging for debugging
 const ws = new WebSocket(`ws://${location.host}`);
 
-// Expose socket for interactive testing in Console
-window.ws = ws;
-
-console.log("Client init", { location: location.href, token, userId, username });
-
 ws.onopen = () => {
-  console.log("WS: open", { host: location.host });
-  try {
-    ws.send("ROLE:BROWSER");
-    ws.send(`USER:${userId}`);
-    console.log("WS: sent ROLE and USER");
-  } catch (sendErr) {
-    console.error("WS send error on open:", sendErr);
-  }
+  ws.send("ROLE:BROWSER");
+  ws.send(`USER:${userId}`);
 };
 
 ws.onmessage = (event) => {
-  console.log("WS: message received", event.data);
-  try {
+   try {
     const data = JSON.parse(event.data);
     updateDashboard(data);
   } catch (e) {
-    console.log("WS: non-JSON message (ignored)", event.data);
+    // ไม่ใช่ JSON → ignore
   }
-};
-
-ws.onclose = (ev) => {
-  console.warn("WS: closed", ev);
-};
-
-ws.onerror = (err) => {
-  console.error("WS: error", err);
 };
 
 /* ================= Gauge ================= */
@@ -342,6 +328,10 @@ function updateNeedle(temp) {
 }
 
 /* ================= Light Graph ================= */
+
+// Use normalized range 0..1 for the light chart
+const LIGHT_MAX = 5000; // sensor max value used for normalization
+const LIGHT_THRESHOLD = 0.1; // normalized threshold (equiv. to 500 lux)
 
 const lightChart = new Chart(
   document.getElementById("lightChart"),
@@ -370,16 +360,16 @@ const lightChart = new Chart(
         x: { 
           display: false 
         },
-        y: { 
-          beginAtZero: true,
-          max: 5000,
-          ticks: {
-            stepSize: 500
-          },
-          grid: {
-            color: "rgba(3, 105, 161, 0.1)"
+          y: {
+            beginAtZero: true,
+            max: 1,
+            ticks: {
+              stepSize: 0.1
+            },
+            grid: {
+              color: "rgba(3, 105, 161, 0.1)"
+            }
           }
-        }
       },
       plugins: { 
         legend: { display: false },
@@ -390,7 +380,6 @@ const lightChart = new Chart(
     }
   }
 );
-
 /* ================= Update ================= */
 
 function updateDashboard(data) {
@@ -410,11 +399,32 @@ function updateDashboard(data) {
   }
 
   lightChart.data.labels.push(time);
-  lightChart.data.datasets[0].data.push(data.light);
+  // Normalize incoming light value to 0..1 for the chart
+  // If ESP32 already sends 0..1, use it directly; otherwise divide by LIGHT_MAX
+  let rawLight = Number(data.light);
+  if (!isFinite(rawLight) || isNaN(rawLight)) rawLight = 0;
+  let normLight;
+  if (rawLight <= 1) {
+    normLight = rawLight; // already normalized
+  } else {
+    normLight = rawLight / LIGHT_MAX;
+  }
+  // clamp
+  if (normLight > 1) normLight = 1;
+  if (normLight < 0) normLight = 0;
+
+  lightChart.data.datasets[0].data.push(normLight);
   lightChart.update();
 
-  // Update Light Value
-  document.getElementById("lightValue").innerText = data.light + " lux";
+  // Update Light Value (bright/dark) using normalized value
+  const lightLabel = document.getElementById("lightValue");
+  if (normLight >= LIGHT_THRESHOLD) {
+    lightLabel.innerText = "กลางคืน";
+    lightLabel.className = "dark";
+  } else {
+    lightLabel.innerText = "กลางวัน";
+    lightLabel.className = "bright";
+  }
 
   // Update Status
   const status = document.getElementById("windowStatus");
