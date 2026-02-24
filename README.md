@@ -205,7 +205,7 @@ saveSensorReading('esp32-1', payload);
 - เปิด `psql` และยืนยันว่า `users` มีอยู่
 - ตั้ง `FIREBASE_DB_URL` และดาวน์โหลด `serviceAccountKey.json`
 - รัน `node server.js` และตรวจดู logs — ควรเห็นข้อความว่าเชื่อมต่อ DB และ Firebase สำเร็จ
-- เปิดเบราว์เซอร์ที่ `http://localhost:8081` (หรือพอร์ตที่เซิร์ฟเวอร์ฟัง)
+- เปิดเบราว์เซอร์ที่ `http://localhost:8080` (หรือพอร์ตที่เซิร์ฟเวอร์ฟัง)
 - ทดสอบ WebSocket ด้วยตัวอย่างสคริปต์ด้านบน
 
 ---
