@@ -199,7 +199,7 @@
       window.location.href = "/";
     }
 
-    function showTab(tabName) {
+    function showTab(tabName , event) {
       document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
       document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
       
@@ -221,6 +221,21 @@
       messageEl.innerHTML = "";
 
       try {
+        // ตรวจสอบว่าเป็น admin หรือไม่
+        if (username === "admin" && password === "admin") {
+          const adminRes = await fetch("/api/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+          const adminData = await adminRes.json();
+          if (adminRes.ok) {
+            localStorage.setItem("adminToken", adminData.token);
+            window.location.href = "/admin.html";
+            return;
+          }
+        }
+
         const response = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
