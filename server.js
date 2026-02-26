@@ -53,7 +53,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: process.env.FIREBASE_DB_URL || "https://smart-windows-control-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      databaseURL: process.env.FIREBASE_DB_URL || "",
     });
     firebaseInitialized = true;
     console.log("✅ Firebase initialized from FIREBASE_SERVICE_ACCOUNT");
@@ -67,7 +67,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       const serviceAccount = require(serviceAccountPath);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        databaseURL: process.env.FIREBASE_DB_URL || "https://smart-windows-control-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        databaseURL: process.env.FIREBASE_DB_URL || "",
       });
       firebaseInitialized = true;
       console.log("✅ Firebase initialized from serviceAccountKey.json");
